@@ -23,6 +23,7 @@ import { PropsWithChildren, useEffect } from "react";
 const HomeScreen = (props: PropsWithChildren) => {
   const isFocused = useIsFocused();
   const navigation = useNavigation<NativeStackNavigationProp<RoutesParam>>();
+
   let todosList = useAppSelector(toDoListSelector);
   let loadingDataTodos = useAppSelector(loadingDataSelector);
   const dispatch = useAppDispatch();

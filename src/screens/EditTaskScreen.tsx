@@ -1,56 +1,59 @@
-import { useState } from "react";
 import {
-  StyleSheet,
-  TextInput,
-  View,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import GlobalContainer from "../components/GlobalContainer";
 import Header from "../components/Header";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  loadingDataSelector,
+  selectedTodoSelector,
+  toggleLoading,
+} from "../store/todoListSlice";
+import { useState } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase/config";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RoutesParam } from "../routes/types";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
 
-const AddTaskScreen = () => {
-  const [text, onChangeText] = useState("");
-  const [description, onChangeDescription] = useState("");
-  const [loading, setLoading] = useState(false);
+const EditTaskScreen = () => {
+  const selectedTodo = useAppSelector(selectedTodoSelector);
+  const globalLoading = useAppSelector(loadingDataSelector);
+  const dispatch = useAppDispatch();
+
+  const [title, onChangeTitle] = useState(selectedTodo.title);
+  const [description, onChangeDescription] = useState(selectedTodo.description);
 
   const navigation = useNavigation<NativeStackNavigationProp<RoutesParam>>();
 
-  const addToDoListToFirestore = async () => {
-    setLoading(true);
-    try {
-      const docRef = await addDoc(collection(db, "todos"), {
-        title: text,
-        description: description,
-        reminder: new Date(),
-        status: false,
-      });
-      console.log("Document written with ID: ", docRef.id);
-      setLoading(false);
-      navigation.goBack();
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      setLoading(false);
-    }
+  const updateData = async () => {
+    dispatch(toggleLoading(true));
+    const todoRef = doc(db, "todos", selectedTodo.id);
+
+    await updateDoc(todoRef, {
+      title,
+      description,
+    });
+    dispatch(toggleLoading(false));
+    navigation.goBack();
   };
 
   return (
     <>
-      <Header title="Add Task" backBtn={true} />
+      <Header title="Edit Task" backBtn={true} />
       <GlobalContainer>
         <View style={styles.container}>
           <View style={styles.formContainer}>
             <Text style={styles.labelText}>Title*</Text>
             <TextInput
               style={styles.inputStyle}
-              onChangeText={onChangeText}
-              value={text}
+              onChangeText={onChangeTitle}
+              value={title}
               placeholder="Pur your task's title here"
             />
             <Text style={styles.labelText}>Description*</Text>
@@ -63,15 +66,15 @@ const AddTaskScreen = () => {
               numberOfLines={5}
             />
           </View>
-          {loading ? (
+          {globalLoading ? (
             <ActivityIndicator style={{ padding: 20 }} />
           ) : (
             <TouchableOpacity
               style={styles.btnSubmit}
-              onPress={() => addToDoListToFirestore()}
+              onPress={() => updateData()}
             >
               <Text style={{ fontWeight: "700", color: "#352F44" }}>
-                Submit
+                Update
               </Text>
             </TouchableOpacity>
           )}
@@ -124,4 +127,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddTaskScreen;
+export default EditTaskScreen;

@@ -25,14 +25,19 @@ export const toDoListSlice = createSlice({
   initialState: {
     todosList: [] as ToDoList[],
     loadingData: false,
+    selectedTodo: {
+      id: "",
+      title: "",
+      description: "",
+      status: false,
+    },
   },
   reducers: {
-    setToDoList: (state, action: PayloadAction<Array<ToDoList>>) => {
-      state.todosList = [...action.payload];
-    },
     toggleLoading: (state, action: PayloadAction<boolean>) => {
-      // console.log("loading: " + state.loadingData);
       state.loadingData = action.payload;
+    },
+    setSelectedTodo: (state, action: PayloadAction<ToDoList>) => {
+      state.selectedTodo = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -50,10 +55,12 @@ export const toDoListSlice = createSlice({
   },
 });
 
-export const { setToDoList, toggleLoading } = toDoListSlice.actions;
+export const { toggleLoading, setSelectedTodo } = toDoListSlice.actions;
 
 export const toDoListSelector = (state: RootState) => state.todos.todosList;
 export const loadingDataSelector = (state: RootState) =>
   state.todos.loadingData;
+export const selectedTodoSelector = (state: RootState) =>
+  state.todos.selectedTodo;
 
 export default toDoListSlice.reducer;

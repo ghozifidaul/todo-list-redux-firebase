@@ -2,6 +2,7 @@ import Checkbox from "expo-checkbox";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import {
   fetchTodosFromFirestore,
+  setSelectedTodo,
   toggleLoading,
 } from "../../store/todoListSlice";
 import { MaterialIcons, Feather } from "@expo/vector-icons";
@@ -9,8 +10,13 @@ import { useAppDispatch } from "../../store/hooks";
 import { ToDoList } from "../../store/types/todos";
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RoutesParam } from "../../routes/types";
 
 const TaskCard = (props: ToDoList) => {
+  const navigation = useNavigation<NativeStackNavigationProp<RoutesParam>>();
+
   const dispatch = useAppDispatch();
 
   const deleteTodo = async (id: string) => {
@@ -38,7 +44,7 @@ const TaskCard = (props: ToDoList) => {
         onValueChange={() => toggleTodo()}
         style={{ marginRight: 20 }}
       />
-      <View>
+      <View style={{ width: 120 }}>
         <Text
           style={props.status ? styles.taskTitleCompleted : styles.taskTitle}
         >
@@ -68,7 +74,9 @@ const TaskCard = (props: ToDoList) => {
       <TouchableOpacity
         style={styles.btnEdit}
         onPress={() => {
-          console.log("edit task");
+          // console.log("edit task");
+          dispatch(setSelectedTodo(props));
+          navigation.navigate("EditTaskScreen");
         }}
       >
         <Feather name="edit" size={20} color="black" />
