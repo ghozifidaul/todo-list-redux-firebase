@@ -1,29 +1,69 @@
 import Checkbox from "expo-checkbox";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { ToDoList } from "../../store/todoListSlice";
+import {
+  fetchTodosFromFirestore,
+  toggleLoading,
+} from "../../store/todoListSlice";
 import { MaterialIcons, Feather } from "@expo/vector-icons";
+import { useAppDispatch } from "../../store/hooks";
+import { ToDoList } from "../../store/types/todos";
+import { doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 const TaskCard = (props: ToDoList) => {
+  const dispatch = useAppDispatch();
+
+  const deleteTodo = async (id: string) => {
+    dispatch(toggleLoading(true));
+    await deleteDoc(doc(db, "todos", id));
+    dispatch(toggleLoading(false));
+    dispatch(fetchTodosFromFirestore());
+  };
+
+  const toggleTodo = async () => {
+    dispatch(toggleLoading(true));
+    const todoRef = doc(db, "todos", props.id);
+
+    await updateDoc(todoRef, {
+      status: !props.status,
+    });
+    dispatch(toggleLoading(false));
+    dispatch(fetchTodosFromFirestore());
+  };
+
   return (
     <View style={styles.itemContainer}>
       <Checkbox
         value={props.status}
-        onValueChange={(value) => {}}
+        onValueChange={() => toggleTodo()}
         style={{ marginRight: 20 }}
       />
       <View>
         <Text
-          style={{
-            fontWeight: "700",
-            fontSize: 18,
-            color: "#352F44",
-          }}
+          style={props.status ? styles.taskTitleCompleted : styles.taskTitle}
         >
           {props.title}
         </Text>
-        <Text style={{ fontStyle: "italic", color: "#5C5470" }}>
+        <Text
+          style={
+            props.status
+              ? {
+                  fontStyle: "italic",
+                  color: "#5C5470",
+                  textDecorationLine: "line-through",
+                }
+              : { fontStyle: "italic", color: "#5C5470" }
+          }
+        >
           {props.description}
         </Text>
+        {props.status ? (
+          <Text style={{ fontStyle: "italic", color: "#5C5470" }}>
+            Completed
+          </Text>
+        ) : (
+          <></>
+        )}
       </View>
       <TouchableOpacity
         style={styles.btnEdit}
@@ -36,7 +76,8 @@ const TaskCard = (props: ToDoList) => {
       <TouchableOpacity
         style={styles.btnDelete}
         onPress={() => {
-          console.log("delete task");
+          // console.log("delete task");
+          deleteTodo(props.id);
         }}
       >
         <MaterialIcons name="delete-outline" size={24} color="black" />
@@ -67,6 +108,17 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     marginLeft: 10,
+  },
+  taskTitle: {
+    fontWeight: "700",
+    fontSize: 18,
+    color: "#352F44",
+  },
+  taskTitleCompleted: {
+    fontWeight: "700",
+    fontSize: 18,
+    color: "#352F44",
+    textDecorationLine: "line-through",
   },
 });
 

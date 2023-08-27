@@ -1,27 +1,47 @@
 import { useState } from "react";
 import {
-  SafeAreaView,
   StyleSheet,
   TextInput,
   View,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import GlobalContainer from "../components/GlobalContainer";
 import Header from "../components/Header";
 import { useAppDispatch } from "../store/hooks";
-import { addToDoList } from "../store/todoListSlice";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RoutesParam } from "../routes/types";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase/config";
 
 const AddTaskScreen = () => {
   const [text, onChangeText] = useState("");
   const [description, onChangeDescription] = useState("");
-  const [reminder, onChangeReminder] = useState("");
+  // const [reminder, onChangeReminder] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<RoutesParam>>();
+
+  const addToDoListToFirestore = async () => {
+    setLoading(true);
+    try {
+      const docRef = await addDoc(collection(db, "todos"), {
+        title: text,
+        description: description,
+        reminder: new Date(),
+        status: false,
+      });
+      console.log("Document written with ID: ", docRef.id);
+      setLoading(false);
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -45,31 +65,26 @@ const AddTaskScreen = () => {
               multiline={true}
               numberOfLines={5}
             />
-            <Text style={styles.labelText}>Reminder (Optional)</Text>
+            {/* <Text style={styles.labelText}>Reminder (Optional)</Text>
             <TextInput
               style={styles.inputStyle}
               onChangeText={onChangeReminder}
               value={reminder}
               placeholder="Pur your task's title here"
-            />
+            /> */}
           </View>
-          <TouchableOpacity
-            style={styles.btnSubmit}
-            onPress={() => {
-              dispatch(
-                addToDoList({
-                  id: text,
-                  title: text,
-                  description: description,
-                  status: false,
-                })
-              );
-
-              navigation.goBack();
-            }}
-          >
-            <Text style={{ fontWeight: "700", color: "#352F44" }}>Submit</Text>
-          </TouchableOpacity>
+          {loading ? (
+            <ActivityIndicator style={{ padding: 20 }} />
+          ) : (
+            <TouchableOpacity
+              style={styles.btnSubmit}
+              onPress={() => addToDoListToFirestore()}
+            >
+              <Text style={{ fontWeight: "700", color: "#352F44" }}>
+                Submit
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </GlobalContainer>
     </>
